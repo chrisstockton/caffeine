@@ -52,6 +52,14 @@ public final class TypesafeConfigurationTest {
         ConfigFactory.load(), "test-cache-2").get()))));
     checkConfig(config.get());
   }
+  
+  @Test
+  public void readThroughGuiceLoader() {
+    Optional<CaffeineConfiguration<Integer, Integer>> config = TypesafeConfigurator
+        .from(ConfigFactory.load(), "test-guice-factory");
+    assertThat(config.get().getCacheLoaderFactory(), instanceOf(GuiceFactory.class));
+    assertThat(config.get().getCacheWriterFactory(), instanceOf(GuiceFactory.class));
+  }
 
   @Test
   public void cache() {

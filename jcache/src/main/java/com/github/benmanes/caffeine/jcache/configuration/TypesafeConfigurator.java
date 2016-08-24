@@ -147,7 +147,12 @@ public final class TypesafeConfigurator {
       configuration.setReadThrough(isReadThrough);
       if (config.hasPath("read-through.loader")) {
         String loaderClass = config.getString("read-through.loader");
-        configuration.setCacheLoaderFactory(FactoryBuilder.factoryOf(loaderClass));
+        if (config.hasPath("read-through.loader-factory")) {
+            configuration.setCacheLoaderFactory(Factories.getFactory(loaderClass, 
+                    config.getString("read-through.loader-factory")));
+        } else {
+            configuration.setCacheLoaderFactory(FactoryBuilder.factoryOf(loaderClass));
+        }
       }
     }
 
@@ -157,7 +162,12 @@ public final class TypesafeConfigurator {
       configuration.setWriteThrough(isWriteThrough);
       if (config.hasPath("write-through.writer")) {
         String writerClass = config.getString("write-through.writer");
-        configuration.setCacheWriterFactory(FactoryBuilder.factoryOf(writerClass));
+        if (config.hasPath("write-through.writer-factory")) {
+            configuration.setCacheWriterFactory(Factories.getFactory(writerClass, 
+                    config.getString("write-through.writer-factory")));
+        } else {
+            configuration.setCacheWriterFactory(FactoryBuilder.factoryOf(writerClass));
+        }
       }
     }
 
