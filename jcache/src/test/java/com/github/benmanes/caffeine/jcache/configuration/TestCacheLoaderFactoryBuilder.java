@@ -10,7 +10,6 @@ import javax.cache.integration.CacheLoader;
 import javax.cache.integration.CacheLoaderException;
 
 /**
- * @author z0018v4
  *
  */
 public class TestCacheLoaderFactoryBuilder

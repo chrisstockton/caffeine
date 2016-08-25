@@ -12,7 +12,6 @@ import javax.cache.integration.CacheWriterException;
 
 /**
  * 
- * @author z0018v4
  *
  */
 public class TestCacheWriterFactoryBuilder

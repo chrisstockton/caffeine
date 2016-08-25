@@ -39,7 +39,6 @@ import com.google.inject.Module;
 import com.google.inject.util.Modules;
 
 /**
- * @author z0018v4
  *
  */
 public class GuiceFactoryBuilderTest {
