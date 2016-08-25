@@ -1,17 +1,15 @@
 /*
  * Copyright 2015 Ben Manes. All Rights Reserved.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 package com.github.benmanes.caffeine.jcache.configuration;
 
@@ -28,11 +26,14 @@ import java.util.concurrent.TimeUnit;
 import javax.cache.Cache;
 import javax.cache.Caching;
 import javax.cache.configuration.CacheEntryListenerConfiguration;
+import javax.cache.configuration.FactoryBuilder;
 import javax.cache.expiry.Duration;
 import javax.cache.expiry.ExpiryPolicy;
 
 import org.testng.annotations.Test;
 
+import com.github.benmanes.caffeine.jcache.configuration.TestCacheLoaderFactoryBuilder.TestCacheLoaderFactory;
+import com.github.benmanes.caffeine.jcache.configuration.TestCacheWriterFactoryBuilder.TestCacheWriterFactory;
 import com.github.benmanes.caffeine.jcache.copy.JavaSerializationCopier;
 import com.google.common.collect.Iterables;
 import com.typesafe.config.ConfigFactory;
@@ -46,26 +47,53 @@ public final class TypesafeConfigurationTest {
   public void configuration() {
     Optional<CaffeineConfiguration<Integer, Integer>> config =
         TypesafeConfigurator.from(ConfigFactory.load(), "test-cache");
-    assertThat(config.get(), is(equalTo(TypesafeConfigurator.from(
-        ConfigFactory.load(), "test-cache").get())));
-    assertThat(config.get(), is(not(equalTo(TypesafeConfigurator.from(
-        ConfigFactory.load(), "test-cache-2").get()))));
+    assertThat(config.get(),
+        is(equalTo(TypesafeConfigurator.from(ConfigFactory.load(), "test-cache").get())));
+    assertThat(config.get(),
+        is(not(equalTo(TypesafeConfigurator.from(ConfigFactory.load(), "test-cache-2").get()))));
     checkConfig(config.get());
   }
 
   @Test
   public void cache() {
-    Cache<Integer, Integer> cache = Caching.getCachingProvider()
-        .getCacheManager().getCache("test-cache");
+    Cache<Integer, Integer> cache =
+        Caching.getCachingProvider().getCacheManager().getCache("test-cache");
     assertThat(cache, is(not(nullValue())));
+  }
+
+  @Test
+  public void overwriteCacheLoaderFactory() {
+    try {
+      TypesafeConfigurator.setCacheLoaderFactoryBuilder(new TestCacheLoaderFactoryBuilder());
+      Optional<CaffeineConfiguration<Integer, Integer>> config =
+          TypesafeConfigurator.from(ConfigFactory.load(), "test-cache");
+      assertThat(config.get().getCacheLoaderFactory(),
+          is(instanceOf(TestCacheLoaderFactory.class)));
+    } finally {
+      TypesafeConfigurator.setCacheLoaderFactoryBuilder(FactoryBuilder::factoryOf);
+      TypesafeConfigurator.setCacheWriterFactoryBuilder(FactoryBuilder::factoryOf);
+    }
+  }
+
+  @Test
+  public void overwriteCacheWriterFactory() {
+    try {
+      TypesafeConfigurator.setCacheWriterFactoryBuilder(new TestCacheWriterFactoryBuilder());
+      Optional<CaffeineConfiguration<Integer, Integer>> config =
+          TypesafeConfigurator.from(ConfigFactory.load(), "test-cache");
+      assertThat(config.get().getCacheWriterFactory(),
+          is(instanceOf(TestCacheWriterFactory.class)));
+    } finally {
+      TypesafeConfigurator.setCacheWriterFactoryBuilder(FactoryBuilder::factoryOf);
+      TypesafeConfigurator.setCacheLoaderFactoryBuilder(FactoryBuilder::factoryOf);
+    }
   }
 
   static void checkConfig(CaffeineConfiguration<?, ?> config) {
     checkStoreByValue(config);
     checkListener(config);
 
-    assertThat(config.getCacheLoaderFactory().create(),
-        instanceOf(TestCacheLoader.class));
+    assertThat(config.getCacheLoaderFactory().create(), instanceOf(TestCacheLoader.class));
     assertThat(config.getCacheWriter(), instanceOf(TestCacheWriter.class));
     assertThat(config.isStatisticsEnabled(), is(true));
     assertThat(config.isManagementEnabled(), is(true));
@@ -78,13 +106,12 @@ public final class TypesafeConfigurationTest {
 
   static void checkStoreByValue(CaffeineConfiguration<?, ?> config) {
     assertThat(config.isStoreByValue(), is(true));
-    assertThat(config.getCopierFactory().create(),
-        instanceOf(JavaSerializationCopier.class));
+    assertThat(config.getCopierFactory().create(), instanceOf(JavaSerializationCopier.class));
   }
 
   static void checkListener(CaffeineConfiguration<?, ?> config) {
-    CacheEntryListenerConfiguration<?, ?> listener = Iterables.getOnlyElement(
-        config.getCacheEntryListenerConfigurations());
+    CacheEntryListenerConfiguration<?, ?> listener =
+        Iterables.getOnlyElement(config.getCacheEntryListenerConfigurations());
     assertThat(listener.getCacheEntryListenerFactory().create(),
         instanceOf(TestCacheEntryListener.class));
     assertThat(listener.getCacheEntryEventFilterFactory().create(),
