@@ -28,6 +28,7 @@ import org.jsr107.ri.annotations.DefaultCacheResolverFactory;
 import org.jsr107.ri.annotations.guice.module.CacheAnnotationsModule;
 import org.testng.annotations.Test;
 
+import com.github.benmanes.caffeine.jcache.configuration.FactoryCreator;
 import com.github.benmanes.caffeine.jcache.configuration.TypesafeConfigurator;
 import com.github.benmanes.caffeine.jcache.spi.CaffeineCachingProvider;
 import com.google.common.collect.Sets;
@@ -58,8 +59,8 @@ public class GuiceFactoryBuilderTest {
       }
     });
     
-    GuiceCacheLoaderFactoryBuilder builder = new GuiceCacheLoaderFactoryBuilder<>(injector);
-    TypesafeConfigurator.setCacheLoaderFactoryBuilder(builder);
+    FactoryCreator builder = new GuiceFactoryCreator(injector);
+    TypesafeConfigurator.setFactoryCreator(builder);
     
     CacheManager manager = injector.getInstance(CacheManager.class);
     Cache<Integer, Person> cache = manager.getCache("read-through");
@@ -139,18 +140,18 @@ public class GuiceFactoryBuilderTest {
     }
   }
   
-  static class GuiceCacheLoaderFactoryBuilder<K, V> implements TypesafeConfigurator.CacheLoaderFactoryBuilder<K, V> {
+  static class GuiceFactoryCreator implements FactoryCreator {
     private final Injector injector;
     
-    public GuiceCacheLoaderFactoryBuilder(Injector injector) {
-      super();
+    public GuiceFactoryCreator(Injector injector) {
       this.injector = injector;
     }
 
     @Override
-    public Factory<? extends CacheLoader<K, V>> getFactory(String className) {
+    public <T> Factory<T> factoryOf(String className) {
       return new GuiceFactory(injector, className);
     }
+
   }
   
   static class GuiceFactory<T> implements Factory<T> {

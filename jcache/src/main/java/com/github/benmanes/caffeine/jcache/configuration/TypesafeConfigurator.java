@@ -33,6 +33,7 @@ import javax.cache.expiry.EternalExpiryPolicy;
 import javax.cache.expiry.ExpiryPolicy;
 import javax.cache.integration.CacheLoader;
 import javax.cache.integration.CacheWriter;
+import javax.inject.Inject;
 
 import com.github.benmanes.caffeine.jcache.expiry.JCacheExpiryPolicy;
 import com.typesafe.config.Config;
@@ -46,11 +47,10 @@ import com.typesafe.config.ConfigException;
  * @param <K>
  */
 @SuppressWarnings("PMD.AvoidDuplicateLiterals")
-public final class TypesafeConfigurator<K, V> {
+public final class TypesafeConfigurator {
   static final Logger logger = Logger.getLogger(TypesafeConfigurator.class.getName());
 
-  private static CacheLoaderFactoryBuilder cacheLoaderFactoryBuilder = FactoryBuilder::factoryOf;
-  private static CacheWriterFactoryBuilder cacheWriterFactoryBuilder = FactoryBuilder::factoryOf;
+  private static FactoryCreator factoryCreator = FactoryBuilder::factoryOf;
 
   private TypesafeConfigurator() {}
 
@@ -87,16 +87,11 @@ public final class TypesafeConfigurator<K, V> {
     return Optional.ofNullable(configuration);
   }
 
-  public static <K, V> void setCacheLoaderFactoryBuilder(
-      CacheLoaderFactoryBuilder<K, V> cacheLoaderFactoryBuilder) {
-    TypesafeConfigurator.cacheLoaderFactoryBuilder = cacheLoaderFactoryBuilder;
+  @Inject
+  public static void setFactoryCreator(FactoryCreator factoryCreator) {
+    TypesafeConfigurator.factoryCreator = requireNonNull(factoryCreator);
   }
-
-  public static <K, V> void setCacheWriterFactoryBuilder(
-      CacheWriterFactoryBuilder<K, V> cacheWriterFactoryBuilder) {
-    TypesafeConfigurator.cacheWriterFactoryBuilder = cacheWriterFactoryBuilder;
-  }
-
+  
   /** A one-shot builder for creating a configuration instance. */
   private static final class Configurator<K, V> {
     final CaffeineConfiguration<K, V> configuration;
@@ -161,7 +156,7 @@ public final class TypesafeConfigurator<K, V> {
       configuration.setReadThrough(isReadThrough);
       if (config.hasPath("read-through.loader")) {
         String loaderClass = config.getString("read-through.loader");
-        configuration.setCacheLoaderFactory(cacheLoaderFactoryBuilder.getFactory(loaderClass));
+        configuration.setCacheLoaderFactory(factoryCreator.factoryOf(loaderClass));
       }
     }
 
@@ -171,7 +166,7 @@ public final class TypesafeConfigurator<K, V> {
       configuration.setWriteThrough(isWriteThrough);
       if (config.hasPath("write-through.writer")) {
         String writerClass = config.getString("write-through.writer");
-        configuration.setCacheWriterFactory(cacheWriterFactoryBuilder.getFactory(writerClass));
+        configuration.setCacheWriterFactory(factoryCreator.factoryOf(writerClass));
       }
     }
 
@@ -241,13 +236,5 @@ public final class TypesafeConfigurator<K, V> {
         configuration.setWeigherFactory(FactoryBuilder.factoryOf(maximum.getString("weigher")));
       }
     }
-  }
-
-  public static interface CacheLoaderFactoryBuilder<K, V> {
-    Factory<? extends CacheLoader<K, V>> getFactory(String className);
-  }
-
-  public static interface CacheWriterFactoryBuilder<K, V> {
-    Factory<? extends CacheWriter<? super K, ? super V>> getFactory(String className);
   }
 }

@@ -32,8 +32,6 @@ import javax.cache.expiry.ExpiryPolicy;
 
 import org.testng.annotations.Test;
 
-import com.github.benmanes.caffeine.jcache.configuration.TestCacheLoaderFactoryBuilder.TestCacheLoaderFactory;
-import com.github.benmanes.caffeine.jcache.configuration.TestCacheWriterFactoryBuilder.TestCacheWriterFactory;
 import com.github.benmanes.caffeine.jcache.copy.JavaSerializationCopier;
 import com.google.common.collect.Iterables;
 import com.typesafe.config.ConfigFactory;
@@ -62,30 +60,15 @@ public final class TypesafeConfigurationTest {
   }
 
   @Test
-  public void overwriteCacheLoaderFactory() {
+  public void overwriteFactoryCreator() {
     try {
-      TypesafeConfigurator.setCacheLoaderFactoryBuilder(new TestCacheLoaderFactoryBuilder());
+      TypesafeConfigurator.setFactoryCreator(new TestFactoryCreator());
       Optional<CaffeineConfiguration<Integer, Integer>> config =
           TypesafeConfigurator.from(ConfigFactory.load(), "test-cache");
       assertThat(config.get().getCacheLoaderFactory(),
-          is(instanceOf(TestCacheLoaderFactory.class)));
+          is(instanceOf(TestFactoryCreator.class)));
     } finally {
-      TypesafeConfigurator.setCacheLoaderFactoryBuilder(FactoryBuilder::factoryOf);
-      TypesafeConfigurator.setCacheWriterFactoryBuilder(FactoryBuilder::factoryOf);
-    }
-  }
-
-  @Test
-  public void overwriteCacheWriterFactory() {
-    try {
-      TypesafeConfigurator.setCacheWriterFactoryBuilder(new TestCacheWriterFactoryBuilder());
-      Optional<CaffeineConfiguration<Integer, Integer>> config =
-          TypesafeConfigurator.from(ConfigFactory.load(), "test-cache");
-      assertThat(config.get().getCacheWriterFactory(),
-          is(instanceOf(TestCacheWriterFactory.class)));
-    } finally {
-      TypesafeConfigurator.setCacheWriterFactoryBuilder(FactoryBuilder::factoryOf);
-      TypesafeConfigurator.setCacheLoaderFactoryBuilder(FactoryBuilder::factoryOf);
+      TypesafeConfigurator.setFactoryCreator(FactoryBuilder::factoryOf);
     }
   }
 
