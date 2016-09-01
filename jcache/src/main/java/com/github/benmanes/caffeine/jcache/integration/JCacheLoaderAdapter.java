@@ -17,7 +17,10 @@ package com.github.benmanes.caffeine.jcache.integration;
 
 import static java.util.Objects.requireNonNull;
 
+import java.util.Collections;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -92,7 +95,9 @@ public final class JCacheLoaderAdapter<K, V>
       boolean statsEnabled = statistics.isEnabled();
       long start = statsEnabled ? ticker.read() : 0L;
 
-      Map<K, Expirable<V>> result = delegate.loadAll(keys).entrySet().stream()
+      Map<K, V> value = delegate.loadAll(keys);
+      Set<Entry<K, V>> entries = value == null ? Collections.emptySet() : value.entrySet();
+      Map<K, Expirable<V>> result = entries.stream()
           .filter(entry -> (entry.getKey() != null) && (entry.getValue() != null))
           .collect(Collectors.toMap(Map.Entry::getKey,
               entry -> new Expirable<>(entry.getValue(), expireTimeMS())));
