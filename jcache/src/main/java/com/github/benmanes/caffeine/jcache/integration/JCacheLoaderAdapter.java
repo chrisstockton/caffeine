@@ -78,7 +78,7 @@ public final class JCacheLoaderAdapter<K, V>
         // Subtracts the load time from the get time
         statistics.recordGetTime(start - ticker.read());
       }
-      return new Expirable<>(value, expireTimeMS());
+      return value == null ? null : new Expirable<>(value, expireTimeMS());
     } catch (CacheLoaderException e) {
       throw e;
     } catch (RuntimeException e) {
